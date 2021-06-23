@@ -21,7 +21,7 @@
         cols="12"
       >
         <v-row justify="center">
-          <v-treeview
+          <!-- <v-treeview
             v-model="tree"
             :open="initiallyOpen"
             :items="items"
@@ -38,7 +38,15 @@
                 {{ files[item.title.split('.')[1]] }}
               </v-icon>
             </template>
-          </v-treeview>
+          </v-treeview> -->
+          <hr />
+          <v-col cols="5" style="text-align:left;border:1px dashed black;">
+            <FileTreeNode
+              v-for="item in items"
+              :key="item.id"
+              :item="item"
+            />
+          </v-col>
         </v-row>
       </v-col>
     </v-row>
@@ -46,32 +54,30 @@
 </template>
 
 <script>
-  export default {
-    name: 'HelloWorld',
+import FileTreeNode from './FileTreeNode';
 
-    data: () => ({
-      initiallyOpen: ['public'],
-      files: {
-        jpg: 'mdi-file-image',
-        epub: 'mdi-file-document-outline',
-        zip: 'mdi-folder-zip'
-      },
-      tree: [],
-      items: [],
-    }),
-    methods: {
-      async fetchData(item) {
-        return fetch(`http://164.90.161.80:3000/api/content?dirId=${item.id}`)
-          .then(res => res.json())
-          .then(json => (item.children.push(...json.children)))
-          .catch(err => console.warn(err))
-      },
+export default {
+  name: 'FileClient',
+
+  components: {
+    FileTreeNode,
+  },
+
+  data: () => ({
+    initiallyOpen: ['public'],
+    files: {
+      jpg: 'mdi-file-image',
+      epub: 'mdi-file-document-outline',
+      zip: 'mdi-folder-zip'
     },
-    async beforeCreate() {
-      fetch('http://164.90.161.80:3000/api/content')
-      .then(res => res.json())
-      .then(json => (this.items = [json]))
-      .catch(err => console.warn(err))
-    }
+    tree: [],
+    items: [],
+  }),
+  async beforeCreate() {
+    fetch('http://164.90.161.80:3000/api/content')
+    .then(res => res.json())
+    .then(json => (this.items = [...json.children]))
+    .catch(err => console.warn(err))
   }
+}
 </script>
