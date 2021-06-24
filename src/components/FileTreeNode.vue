@@ -1,21 +1,28 @@
 <template>
   <div>
-    <span
+    <v-btn
+      icon
+      :loading="item.id === this.item.id && loading"
       v-if="item.children"
-      @click="open ? hideChildren() : showChildren(item)"
+      @click="open ? hideChildren() : showChildren(item.id)"
     >
-      <v-icon>
-        {{ open ? 'mdi-folder-open' : 'mdi-folder' }}
+      <v-icon :style="open ? 'color: black' : ''">
+        {{ open ? files.folderOpen : files.folder }}
       </v-icon>
-    </span>
-    <span v-else>
+      <template v-slot:loader>
+        <span class="custom-loader">
+          <v-icon light>mdi-cached</v-icon>
+        </span>
+      </template>
+    </v-btn>
+    <v-btn icon v-else>
       <v-icon>
         {{ files[item.title.split('.')[1]] }}
       </v-icon>
-    </span>
+    </v-btn>
     {{ item.title }}
     <div
-      v-show="item.children && item.children.length > 0 && open"
+      v-show="item.children && open"
       style="padding: 6px 0 6px 42px;"
     >
       <FileTreeNode
@@ -28,16 +35,14 @@
 </template>
 
 <script>
+import { mapGetters } from 'vuex';
+
 export default {
   name: 'FileTreeNode',
   data: () => ({
+    loading: false,
     open: false,
     childrenLoaded: false,
-    files: {
-      jpg: 'mdi-file-image',
-      epub: 'mdi-file-document-outline',
-      zip: 'mdi-folder-zip'
-    },
   }),
   props: {
       item: {
@@ -47,17 +52,31 @@ export default {
         }
     }
   },
-  methods: {
-    showChildren(item) {
-      if (!this.childrenLoaded) {
-        return fetch(`http://164.90.161.80:3000/api/content?dirId=${item.id}`)
-        .then(res => res.json())
-        .then(json => {
-          this.item.children.push(...json.children);
+  watch: {
+    currentItem(item) {
+      if (item.id === this.item.id) {
+        if (!this.childrenLoaded){
+          this.item.children = item.children;
           this.childrenLoaded = true;
-          this.open = true;
-        })
-        .catch(err => console.warn(err))
+        }
+        this.open = true;
+        this.loading = false;
+      }
+    },
+  },
+  computed: {
+    ...mapGetters([
+      'files',
+      'currentItem'
+    ])
+  },
+  methods: {
+    showChildren(id) {
+      if (!this.childrenLoaded) {
+        this.loading = true;
+        this.$store.dispatch('fetchItem', {
+          id,
+        });
       }
       this.open = true;
     },
